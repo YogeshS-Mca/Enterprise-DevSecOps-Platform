@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# IDE
+.vscode/
+.idea/
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# SonarQube
+.scannerwork/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
+# Kubernetes secrets
+*-secret.yaml
+secret.yaml
+
+# Helm packages
+charts/*.tgz
+
+# Docker
+docker-compose.override.yml
+
+# Monitoring data
+prometheus-data/
+grafana-data/
+
+# Security reports
+security/reports/
+*.sarif
+
+# SSH Keys & Certificates
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Temporary files
+*.tmp
+*.temp
