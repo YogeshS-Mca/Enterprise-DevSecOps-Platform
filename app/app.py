@@ -3,6 +3,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
 app = Flask(__name__)
 
+# Prometheus Counter
 REQUEST_COUNT = Counter(
     "application_http_requests_total",
     "Total number of HTTP requests received",
@@ -12,7 +13,6 @@ REQUEST_COUNT = Counter(
 
 @app.get("/")
 def home():
-    """Return basic application information."""
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint="/",
@@ -30,7 +30,6 @@ def home():
 
 @app.get("/health")
 def health():
-    """Confirm that the application process is running."""
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint="/health",
@@ -46,7 +45,6 @@ def health():
 
 @app.get("/ready")
 def ready():
-    """Confirm that the application is ready to receive traffic."""
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint="/ready",
@@ -62,7 +60,6 @@ def ready():
 
 @app.get("/metrics")
 def metrics():
-    """Expose application metrics in Prometheus format."""
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint="/metrics",
@@ -70,24 +67,26 @@ def metrics():
 
     return Response(
         generate_latest(),
-        content_type=CONTENT_TYPE_LATEST,
+        mimetype=CONTENT_TYPE_LATEST,
     )
 
 
 @app.errorhandler(404)
-def not_found(error):
-    """Return a structured JSON response for invalid endpoints."""
-    return jsonify(
-        {
-            "error": "Not Found",
-            "message": "The requested endpoint does not exist",
-        }
-    ), 404
+def page_not_found(error):
+    return (
+        jsonify(
+            {
+                "status": "error",
+                "message": "Endpoint not found",
+            }
+        ),
+        404,
+    )
 
 
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
         port=5000,
-        debug=False,
+        debug=True,
     )
