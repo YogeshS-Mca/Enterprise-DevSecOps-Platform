@@ -1,192 +1,290 @@
-# Enterprise DevSecOps Platform
+# 🚀 Enterprise DevSecOps Platform
 
-A production-style DevSecOps portfolio project that demonstrates application development, containerization, monitoring, observability, Docker networking, and structured GitHub workflows.
+> **A production-inspired DevSecOps engineering platform built to demonstrate the complete path from code to validated, observable, and security-scanned software.**
 
-The platform currently includes a Python Flask application served by Waitress, containerized with Docker, orchestrated with Docker Compose, monitored by Prometheus, and visualized in Grafana.
+This repository is not intended to be a collection of disconnected DevOps tools.
 
----
-
-## Project Status
-
-- ✅ Phase 1 — Repository initialization
-- ✅ Phase 2 — Flask application and operational endpoints
-- ✅ Phase 3 — Docker containerization and security hardening
-- 🔄 Phase 4 — Docker Compose monitoring stack
-- ⏳ Phase 5 — Automated testing and GitHub Actions CI
-- ⏳ Phase 6 — Security scanning
-- ⏳ Phase 7 — Kubernetes deployment
-- ⏳ Phase 8 — Helm packaging
-- ⏳ Phase 9 — Final architecture and release documentation
-
----
-
-## Solution Overview
-
-The project is designed as a practical learning platform for DevOps and DevSecOps concepts.
+It is being developed incrementally as a single engineering platform where application development, containerization, testing, observability, CI, security scanning, troubleshooting, and Git workflows operate together.
 
 ```text
-User / PowerShell
-        |
-        v
-Windows Host Port 5001
-        |
-        v
-Flask Application Containera
-        |
-        +--> /health
-        +--> /ready
-        +--> /metrics
-        |
-        v
-Prometheus
-        |
-        v
-Grafana Dashboard
+Build → Test → Containerize → Observe → Secure → Validate → Improve
+```
+
+---
+
+# 🏗️ Current Platform Architecture
+
+The following diagram represents the platform implemented through **Phase 6**.
+
+It combines application CI, Docker validation, Trivy security scanning, containerized runtime services, Prometheus monitoring, and Grafana observability.
+
+![Enterprise DevSecOps Platform Architecture](diagrams/enterprise-devsecops-platform-architecture.png)
+
+### Architecture Summary
+
+```text
+Developer
+    |
+    | git push / pull request
+    v
+GitHub Repository
+    |
+    v
+GitHub Actions
+    |
+    +-----------------------------+
+    |                             |
+    v                             v
+Application CI                Security Scanning
+    |                             |
+    +--> Pytest                   +--> Trivy Repository Scan
+    |                             |
+    +--> Docker Build             +--> Trivy Container Image Scan
+    |                             |
+    +-------------+---------------+
+                  |
+                  v
+            Validation Result
+                  |
+                  v
+          Pull Request / Merge
+```
+
+Runtime and observability:
+
+```text
+User / Client
+      |
+      | HTTP localhost:5001
+      v
+Flask + Waitress
+Application :5000
+      |
+      | /metrics
+      v
+Prometheus :9090
+      |
+      | PromQL
+      v
+Grafana :3000
 ```
 
 Internal Docker communication:
 
 ```text
-Grafana --> http://prometheus:9090
-Prometheus --> http://app:5000/metrics
+Prometheus → app:5000/metrics
+Grafana    → prometheus:9090
 ```
 
-Host access:
+> **Architecture scope:** This diagram represents the implemented Phase 1–6 platform. It will evolve when Kubernetes and Helm are introduced.
+
+---
+
+# 🟢 Project Status
+
+| Phase   | Engineering Area                            | Status     |
+| ------- | ------------------------------------------- | ---------- |
+| Phase 1 | Repository Foundation                       | ✅ Complete |
+| Phase 2 | Flask Application & Operational Endpoints   | ✅ Complete |
+| Phase 3 | Docker Containerization & Runtime Hardening | ✅ Complete |
+| Phase 4 | Prometheus & Grafana Observability          | ✅ Complete |
+| Phase 5 | Automated Testing & GitHub Actions CI       | ✅ Complete |
+| Phase 6 | DevSecOps Security Scanning                 | ✅ Complete |
+| Phase 7 | Kubernetes Deployment                       | 🚧 Next    |
+| Phase 8 | Helm Packaging                              | ⏳ Planned  |
+| Phase 9 | Final Architecture & Engineering Release    | ⏳ Planned  |
+
+---
+
+# ⭐ Engineering Highlights
+
+## 🔄 Continuous Integration
+
+Application changes are automatically validated using:
+
+* Pytest
+* API endpoint tests
+* Test coverage
+* Docker image build validation
+* Push-triggered workflows
+* Pull-request-triggered workflows
+
+---
+
+## 🔐 Shift-Left Security
+
+Security checks run as part of the development workflow instead of waiting until deployment.
+
+Implemented controls include:
+
+* Repository vulnerability scanning
+* Secret scanning
+* Misconfiguration scanning
+* Container image scanning
+* HIGH and CRITICAL vulnerability analysis
+* Unfixed-vulnerability filtering
+* Runtime dependency verification
+
+---
+
+## 📊 Observability
+
+Prometheus and Grafana provide visibility into:
+
+* Application availability
+* HTTP request totals
+* Requests by endpoint
+* HTTP request rate
+* Application memory usage
+* Application CPU usage
+* Open file descriptors
+
+---
+
+## 🐳 Container Security
+
+The runtime includes:
+
+* Slim Python base image
+* Dedicated non-root user
+* Waitress WSGI server
+* Docker health checks
+* Optimized dependency layers
+* Dedicated Docker networking
+* Persistent monitoring volumes
+
+---
+
+## 🌿 Controlled Git Workflow
+
+Development is performed through feature branches and pull requests:
 
 ```text
-Application --> http://localhost:5001
-Prometheus  --> http://localhost:9090
-Grafana     --> http://localhost:3000
+Feature Branch
+      ↓
+Implementation
+      ↓
+Tests + Build + Security
+      ↓
+Pull Request
+      ↓
+GitHub Actions
+      ↓
+Validated Merge
+      ↓
+main
 ```
 
 ---
 
-## Current Features
+# 🧰 Technology Stack
 
-### Application
-
-- Python Flask application
-- Waitress WSGI server
-- JSON-based application response
-- Health endpoint: `/health`
-- Readiness endpoint: `/ready`
-- Prometheus metrics endpoint: `/metrics`
-- Custom HTTP request counter
-- Custom 404 response
-
-### Docker
-
-- Slim Python base image
-- Non-root application user
-- Docker health check
-- OCI image metadata
-- Optimized dependency installation
-- `.dockerignore`
-- Versioned images
-- Restart policy
-
-### Docker Compose
-
-- Flask application service
-- Prometheus service
-- Grafana service
-- Dedicated bridge network
-- Persistent named volumes
-- Service dependency based on application health
-- Host-to-container port mapping
-
-### Monitoring and Observability
-
-- Prometheus scraping through Docker service discovery
-- Grafana connected to Prometheus
-- Application availability panel
-- Total HTTP request panel
-- Requests grouped by endpoint
-- HTTP request rate panel
-- Prometheus target validation
-- Container-to-container connectivity testing
+| Area                    | Technologies                   |
+| ----------------------- | ------------------------------ |
+| Application             | Python, Flask                  |
+| Production WSGI         | Waitress                       |
+| Testing                 | Pytest, pytest-cov             |
+| Containerization        | Docker                         |
+| Multi-container Runtime | Docker Compose                 |
+| Metrics                 | Prometheus                     |
+| Visualization           | Grafana                        |
+| CI                      | GitHub Actions                 |
+| Security                | Trivy                          |
+| Version Control         | Git, GitHub                    |
+| Local Development       | Visual Studio Code, PowerShell |
+| Next Platform Layer     | Kubernetes                     |
+| Future Packaging        | Helm                           |
 
 ---
 
-## Technologies
-
-| Category | Tools |
-|---|---|
-| Application | Python, Flask, Waitress |
-| Containerization | Docker, Docker Compose |
-| Monitoring | Prometheus, Grafana |
-| Version Control | Git, GitHub |
-| Development | Visual Studio Code, PowerShell |
-| Planned | GitHub Actions, Trivy, Checkov, Kubernetes, Helm |
-
----
-
-## Repository Structure
+# 📁 Repository Structure
 
 ```text
 enterprise-devsecops-platform/
-|
-|-- app/
-|   `-- app.py
-|
-|-- diagrams/
-|
-|-- docker/
-|
-|-- docs/
-|   `-- 04-monitoring-stack.md
-|
-|-- helm/
-|
-|-- jenkins/
-|
-|-- kubernetes/
-|
-|-- monitoring/
-|   |-- grafana/
-|   `-- prometheus/
-|       `-- prometheus.yml
-|
-|-- screenshots/
-|
-|-- scripts/
-|
-|-- security/
-|
-|-- tests/
-|
-|-- .dockerignore
-|-- .gitattributes
-|-- .gitignore
-|-- compose.yaml
-|-- Dockerfile
-|-- README.md
-`-- requirements.txt
+│
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── security.yml
+│
+├── app/
+│   └── app.py
+│
+├── diagrams/
+│   └── enterprise-devsecops-platform-architecture.png
+│
+├── docs/
+│   ├── 04-monitoring-stack.md
+│   └── 06-security-scanning.md
+│
+├── helm/
+│
+├── kubernetes/
+│
+├── monitoring/
+│   ├── grafana/
+│   │   └── dashboards/
+│   └── prometheus/
+│       └── prometheus.yml
+│
+├── screenshots/
+│
+├── security/
+│   └── reports/
+│
+├── tests/
+│   └── test_app.py
+│
+├── .dockerignore
+├── .gitattributes
+├── .gitignore
+├── compose.yaml
+├── Dockerfile
+├── requirements.txt
+├── requirements-dev.txt
+└── README.md
 ```
 
 ---
 
-## Application Endpoints
+# 🌐 Application Layer
 
-| Endpoint | Purpose |
-|---|---|
-| `/` | Returns application details |
-| `/health` | Confirms that the application process is healthy |
-| `/ready` | Confirms that the application is ready to receive traffic |
-| `/metrics` | Exposes Prometheus metrics |
-| Invalid route | Returns a structured 404 JSON response |
+The application exposes operational endpoints designed for application access, monitoring, and future orchestration.
+
+| Endpoint      | Purpose                               |
+| ------------- | ------------------------------------- |
+| `/`           | Application information               |
+| `/health`     | Confirms application health           |
+| `/ready`      | Confirms readiness to receive traffic |
+| `/metrics`    | Exposes Prometheus metrics            |
+| Invalid route | Returns structured JSON 404 response  |
+
+The application runs behind **Waitress** rather than the Flask development server.
 
 ---
 
-## Docker Image
+# 🐳 Phase 3 — Containerization & Runtime Hardening
 
-Build the image:
+The Flask application is packaged into a Docker image.
+
+Implemented practices include:
+
+* Python slim base image
+* Non-root application user
+* Waitress production server
+* Docker health check
+* `.dockerignore`
+* OCI image metadata
+* Optimized dependency installation
+* Runtime verification
+
+Build:
 
 ```powershell
 docker build -t enterprise-devsecops-platform:1.0.1 .
 ```
 
-Run the image manually:
+Run:
 
 ```powershell
 docker run -d `
@@ -204,122 +302,142 @@ docker logs enterprise-devsecops
 docker exec enterprise-devsecops whoami
 ```
 
-Expected runtime user:
+Expected runtime identity:
 
 ```text
 appuser
 ```
 
+Running the application as a non-root user reduces unnecessary container privileges.
+
 ---
 
-## Start the Monitoring Stack
+# 🔗 Docker Compose Runtime
 
-Validate the Compose configuration:
+The runtime stack contains:
 
-```powershell
-docker compose config
+```text
+Flask Application
+       +
+Prometheus
+       +
+Grafana
 ```
 
-Start all services:
+Start:
 
 ```powershell
 docker compose up -d --build
 ```
 
-Check service status:
+Validate:
 
 ```powershell
 docker compose ps
 ```
 
-Stop the stack:
+Stop:
 
 ```powershell
 docker compose down
 ```
 
-Do not use `docker compose down -v` unless you intentionally want to delete Prometheus and Grafana data.
+> Avoid `docker compose down -v` unless monitoring volumes are intentionally being deleted.
 
 ---
 
-## Docker Networking
+# 🌐 Docker Networking
 
-The services are connected through a custom bridge network.
-
-```text
-enterprise-devsecops-platform_monitoring-network
-```
-
-Prometheus accesses the application using:
+Host access:
 
 ```text
-http://app:5000/metrics
+Application → http://localhost:5001
+Prometheus  → http://localhost:9090
+Grafana     → http://localhost:3000
 ```
 
-Grafana accesses Prometheus using:
+Internal Docker communication:
 
 ```text
-http://prometheus:9090
+Prometheus → http://app:5000/metrics
+Grafana    → http://prometheus:9090
 ```
 
-Docker Compose service names act as internal DNS names. Container IP addresses may change, but service names remain stable.
+The services communicate through the dedicated Docker Compose monitoring network.
 
-Inspect the network:
-
-```powershell
-docker network inspect enterprise-devsecops-platform_monitoring-network
-```
-
-Test container-to-container communication:
-
-```powershell
-docker compose exec prometheus sh
-```
-
-Inside the Prometheus container:
-
-```sh
-wget -qO- http://app:5000/health
-```
+Docker service names are used as internal DNS names instead of depending on changing container IP addresses.
 
 ---
 
-## Prometheus Configuration
+# 📊 Phase 4 — Monitoring & Observability
 
-Prometheus configuration file:
-
-```text
-monitoring/prometheus/prometheus.yml
-```
-
-Current scrape target:
-
-```yaml
-targets:
-  - "app:5000"
-```
-
-Metrics path:
+Phase 4 introduced application observability using:
 
 ```text
-/metrics
+Application
+     ↓
+Prometheus
+     ↓
+Grafana
 ```
 
-Useful PromQL queries:
+Prometheus scrapes:
 
-### Application availability
+```text
+app:5000/metrics
+```
+
+Grafana uses:
+
+```text
+prometheus:9090
+```
+
+as its Prometheus data source.
+
+---
+
+## 📈 Grafana Dashboard
+
+Dashboard:
+
+```text
+Enterprise DevSecOps Monitoring Dashboard
+```
+
+Implemented panels:
+
+| Panel                    | Visualization | Purpose                |
+| ------------------------ | ------------- | ---------------------- |
+| Application Availability | Stat          | Application UP/DOWN    |
+| Total HTTP Requests      | Stat          | Cumulative traffic     |
+| Requests by Endpoint     | Bar Gauge     | Endpoint traffic       |
+| HTTP Request Rate        | Time Series   | Requests per second    |
+| Application Memory Usage | Time Series   | Runtime memory         |
+| Application CPU Usage    | Time Series   | CPU utilization        |
+| Open File Descriptors    | Stat          | Runtime resource usage |
+
+### Final Dashboard
+
+![Enterprise DevSecOps Monitoring Dashboard](screenshots/phase-04-10-final-grafana-dashboard.png)
+
+---
+
+# 🔎 Prometheus Queries
+
+### Application Availability
 
 ```promql
 up{job="enterprise-devsecops-app"}
 ```
 
-### Total HTTP requests
+### Total HTTP Requests
 
 ```promql
 sum(application_http_requests_total)
 ```
 
-### Requests by endpoint
+### Requests by Endpoint
 
 ```promql
 sum by (endpoint) (
@@ -327,7 +445,7 @@ sum by (endpoint) (
 )
 ```
 
-### HTTP request rate
+### HTTP Request Rate
 
 ```promql
 sum(
@@ -335,286 +453,685 @@ sum(
 )
 ```
 
----
+### Application CPU Usage
 
-## Grafana Dashboard
-
-Dashboard name:
-
-```text
-Enterprise DevSecOps Monitoring Dashboard
+```promql
+sum(
+  rate(process_cpu_seconds_total{job="enterprise-devsecops-app"}[5m])
+)
 ```
 
-Current panels:
+---
 
-| Panel | Visualization | Purpose |
-|---|---|---|
-| Application Availability | Stat | Shows `UP` or `DOWN` |
-| Total HTTP Requests | Stat | Shows cumulative request count |
-| Requests by Endpoint | Bar gauge | Compares traffic by endpoint |
-| HTTP Request Rate | Time series | Shows current requests per second |
+# 🧪 Phase 5 — Automated Testing & CI
 
-Planned panels:
+Phase 5 introduced automated quality validation.
 
-- Application memory usage
-- Application CPU usage
-- Open file descriptors
-- Final monitoring summary
+The project uses:
+
+* `pytest`
+* `pytest-cov`
+* GitHub Actions
+
+Tests validate:
+
+* Home endpoint
+* Health endpoint
+* Readiness endpoint
+* Metrics endpoint
+* Invalid-route behavior
+
+Current local test result:
+
+```text
+5 tests passed
+```
+
+The CI workflow performs:
+
+```text
+Push / Pull Request
+        ↓
+Checkout Repository
+        ↓
+Setup Python
+        ↓
+Install Dependencies
+        ↓
+Run Pytest
+        ↓
+Validate Docker Build
+        ↓
+CI Result
+```
+
+This ensures application changes are validated before integration.
 
 ---
 
-## Monitoring Screenshots
+# 🔐 Phase 6 — DevSecOps Security Scanning
 
-### Application availability
+Phase 6 introduced automated security checks using:
 
-![Application Availability](screenshots/phase-04-02-application-availability-panel.png)
+```text
+Trivy + GitHub Actions
+```
 
-### Total HTTP requests
-
-![Total HTTP Requests](screenshots/phase-04-03-total-http-requests.png)
-
-### Requests by endpoint
-
-![Requests by Endpoint](screenshots/phase-04-04-requests-by-endpoint.png)
-
-### HTTP request rate configuration
-
-![HTTP Request Rate](screenshots/phase-04-05-http-request-rate-config.png)
-
-### Dashboard progress
-
-![Dashboard Progress](screenshots/phase-04-06-dashboard-four-panels.png)
-
-### Prometheus target
-
-![Prometheus Target](screenshots/phase-04-prometheus-target-up.png)
-
-### Grafana data source
-
-![Grafana Data Source](screenshots/phase-04-grafana-datasource-success.png)
+The security workflow performs two primary jobs.
 
 ---
 
-## Traffic Generation
+## 🔍 Repository Security Scan
 
-The following PowerShell loop generates test traffic:
+The repository is analyzed for:
+
+* Vulnerabilities
+* Secrets
+* Misconfigurations
+
+Conceptually:
+
+```text
+Source Repository
+      |
+      +--> Vulnerabilities
+      |
+      +--> Secrets
+      |
+      +--> Misconfigurations
+```
+
+Workflow:
+
+```text
+.github/workflows/security.yml
+```
+
+---
+
+## 🛡️ Container Image Security Scan
+
+The application image is also scanned after building:
+
+```text
+Source Code
+     ↓
+Docker Build
+     ↓
+Container Image
+     ↓
+Trivy Image Scan
+     ↓
+HIGH / CRITICAL Findings
+```
+
+This detects risks originating from both:
+
+* application packages;
+* operating-system packages inside the image.
+
+---
+
+# 🧠 Vulnerability Investigation
+
+A scanner result was treated as an investigation trigger rather than automatically changing dependencies.
+
+The approach used was:
+
+```text
+Detect
+   ↓
+Verify
+   ↓
+Analyze Runtime Impact
+   ↓
+Check Available Remediation
+   ↓
+Remediate or Document
+   ↓
+Re-scan
+```
+
+Python findings involving packages such as `msgpack` and `setuptools` were verified directly inside the runtime container.
+
+Runtime verification included:
 
 ```powershell
-1..100 | ForEach-Object {
-    Invoke-RestMethod http://localhost:5001/ | Out-Null
-    Invoke-RestMethod http://localhost:5001/health | Out-Null
-    Invoke-RestMethod http://localhost:5001/ready | Out-Null
-    Start-Sleep -Milliseconds 100
-}
+docker run --rm `
+  --entrypoint python `
+  enterprise-devsecops-platform:security `
+  -m pip list
 ```
 
-This sends:
-
-```text
-100 requests to /
-100 requests to /health
-100 requests to /ready
-300 total requests
-```
-
-Prometheus must scrape the application before Grafana displays the updated data.
+This helped distinguish actual runtime dependencies from metadata/SBOM-related findings.
 
 ---
 
-## Troubleshooting Case — Port Conflict
+# 🧯 Security Pipeline Troubleshooting
 
-### Error
+The GitHub Actions security workflow did not pass on the first attempt.
+
+Application CI continued to succeed:
+
+```text
+Python Tests       → PASS
+Docker Build       → PASS
+```
+
+but both Trivy jobs initially failed during:
+
+```text
+Install Trivy
+```
+
+The problem was isolated to the security-tool setup rather than application code.
+
+The pinned Trivy GitHub Action integration was updated and the workflow was executed again.
+
+Final result:
+
+```text
+Application Tests              PASS
+Docker Build Validation        PASS
+Trivy Repository Scan          PASS
+Trivy Container Image Scan     PASS
+```
+
+---
+
+# ✅ GitHub Actions Validation
+
+Phase 6 concluded with:
+
+> **8 successful GitHub Actions checks**
+
+across application CI and security validation.
+
+![GitHub Actions Security Workflow](screenshots/phase-06-09-github-security-workflow-success.png)
+
+Validated checks include:
+
+* Python tests
+* Docker build validation
+* Repository security scanning
+* Container image scanning
+* Push workflow validation
+* Pull-request workflow validation
+
+---
+
+# 🛡️ CI + Security Pipeline
+
+```text
+                  Git Push / Pull Request
+                            |
+               +------------+------------+
+               |                         |
+               v                         v
+         Application CI             Security CI
+               |                         |
+        +------+-------+          +------+------+
+        |              |          |             |
+        v              v          v             v
+      Pytest       Docker Build  Repo Scan    Image Scan
+        |              |          |             |
+        +------+-------+          +------+------+
+               |                         |
+               +------------+------------+
+                            |
+                            v
+                     Validation Result
+                            |
+                            v
+                       PR / Merge
+```
+
+---
+
+# ⚙️ Security Baseline Strategy
+
+The initial workflow uses:
+
+```yaml
+exit-code: 0
+```
+
+This establishes **security visibility** before enforcing blocking rules.
+
+Current approach:
+
+```text
+Finding
+   ↓
+Report
+   ↓
+Investigate
+   ↓
+Document / Remediate
+```
+
+Future enforcement can selectively use:
+
+```yaml
+exit-code: 1
+```
+
+for vulnerabilities that should block unsafe changes.
+
+This introduces security progressively:
+
+```text
+Visibility → Understanding → Enforcement
+```
+
+---
+
+# 🧯 Engineering Troubleshooting Cases
+
+This repository intentionally documents failures as well as successful implementations.
+
+---
+
+## Case 1 — Host Port Conflict
+
+Error:
 
 ```text
 Bind for 0.0.0.0:5000 failed: port is already allocated
 ```
 
-### Investigation
+Root cause:
 
-The process using port `5000` was identified with:
+A Windows Python process was already using host port `5000`.
 
-```powershell
-Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue |
-Select-Object LocalAddress, LocalPort, State, OwningProcess
-```
-
-The owning process was checked using:
-
-```powershell
-Get-Process -Id <PID>
-```
-
-### Root Cause
-
-A local Python process was already using Windows host port `5000`.
-
-### Resolution
-
-The conflicting Python process was stopped:
-
-```powershell
-Stop-Process -Id <PID>
-```
-
-The incomplete Compose stack was removed:
-
-```powershell
-docker compose down
-```
-
-The host mapping was changed from:
-
-```yaml
-ports:
-  - "5000:5000"
-```
-
-to:
-
-```yaml
-ports:
-  - "5001:5000"
-```
-
-Prometheus continued to use the internal Docker address:
+Resolution:
 
 ```text
+Host Access:
+localhost:5001
+
+Container:
 app:5000
 ```
 
-The stack was rebuilt:
+The experience demonstrated the difference between host port mapping and container networking.
 
-```powershell
-docker compose up -d --build
-```
+---
 
-### Learning
+## Case 2 — Docker Outbound Networking
+
+During an image build, Windows could reach PyPI while Docker bridge-network containers could not.
+
+Host test:
 
 ```text
-Windows access: localhost:5001
-Docker internal access: app:5000
+Windows → PyPI → reachable
 ```
 
-Changing the host port did not change container-to-container communication.
+Container test:
 
----
+```text
+Docker bridge → PyPI → network unreachable
+```
 
-## Security and Reliability
+Docker DNS resolution worked, but outbound bridge connectivity failed.
 
-- Application runs as a non-root user
-- Docker health check is configured
-- Prometheus configuration is mounted read-only
-- Named volumes persist monitoring data
-- Services use a dedicated bridge network
-- Restart policies use `unless-stopped`
-- Local virtual environment is excluded from the image
-- Unnecessary files are excluded through `.dockerignore`
+Host-network validation returned:
 
----
+```text
+HTTP 200
+```
 
-## Learning Outcomes
-
-This project currently demonstrates:
-
-- Flask application development
-- WSGI application serving
-- Docker image creation
-- Docker layer caching
-- Non-root container execution
-- Docker health checks
-- Docker Compose orchestration
-- Service discovery
-- Host and container port mapping
-- Custom bridge networking
-- Prometheus scraping
-- PromQL
-- Grafana visualization
-- Traffic generation
-- Monitoring troubleshooting
-- Git feature-branch workflow
-- Pull-request-based development
-
----
-
-## Roadmap
-
-### Phase 4 — Complete Monitoring
-
-- [x] Application availability
-- [x] Total HTTP requests
-- [x] Requests by endpoint
-- [x] HTTP request rate
-- [ ] Memory usage
-- [ ] CPU usage
-- [ ] Open file descriptors
-- [ ] Final dashboard layout
-- [ ] Dashboard JSON export
-
-### Phase 5 — Testing and CI
-
-- [ ] Unit tests
-- [ ] API endpoint tests
-- [ ] Docker build validation
-- [ ] GitHub Actions workflow
-- [ ] Automated linting
-
-### Phase 6 — DevSecOps
-
-- [ ] Trivy image scanning
-- [ ] Checkov configuration scanning
-- [ ] Dependency scanning
-- [ ] SonarQube analysis
-- [ ] Security reporting
-
-### Phase 7 — Kubernetes
-
-- [ ] Deployment
-- [ ] Service
-- [ ] ConfigMap
-- [ ] Probes
-- [ ] Resource limits
-- [ ] Horizontal scaling
-
-### Phase 8 — Helm
-
-- [ ] Helm chart
-- [ ] Values files
-- [ ] Reusable templates
-- [ ] Environment-specific configuration
-
----
-
-## Detailed Documentation
-
-- [Phase 4 — Docker Compose Monitoring Stack](docs/04-monitoring-stack.md)
-
-Additional phase documents will be added as the project progresses.
-
----
-
-## Git Workflow
-
-Feature development is completed through dedicated branches.
-
-Example:
+The image was successfully built using:
 
 ```powershell
-git switch -c feature/monitoring-stack
+docker build --network=host -t enterprise-devsecops-platform:ci .
 ```
-
-After implementation:
-
-```powershell
-git add .
-git commit -m "feat: add Prometheus and Grafana monitoring stack"
-git push -u origin feature/monitoring-stack
-```
-
-Changes are reviewed and merged into `main` through a GitHub pull request.
 
 ---
 
-## Author
+## Case 3 — Missing Runtime Dependency
+
+A container initially failed with:
+
+```text
+exec: "waitress-serve": executable file not found in $PATH
+```
+
+Runtime and development dependencies were separated and the rebuilt image was validated successfully.
+
+---
+
+## Case 4 — Trivy GitHub Action Setup
+
+Application CI passed while security jobs failed during Trivy installation.
+
+The issue was isolated, the action integration was updated, and the complete pipeline was rerun successfully.
+
+Final result:
+
+```text
+8 / 8 checks passed
+```
+
+---
+
+# 🔒 Current Security & Reliability Practices
+
+The platform currently demonstrates:
+
+* Non-root container runtime
+* Minimal Python image
+* Application health checks
+* Application readiness checks
+* Prometheus metrics
+* Dedicated Docker network
+* Persistent monitoring storage
+* Read-only Prometheus configuration
+* Automated unit/API testing
+* Docker build validation
+* Repository vulnerability scanning
+* Secret scanning
+* Misconfiguration scanning
+* Container vulnerability scanning
+* Runtime dependency verification
+* Feature-branch development
+* Pull-request validation
+* GitHub Actions automation
+
+---
+
+# 📚 Engineering Skills Demonstrated
+
+The project currently provides hands-on experience with:
+
+### Application Engineering
+
+* Python
+* Flask
+* Waitress
+* Operational endpoints
+
+### Containers
+
+* Docker
+* Image layers
+* Build caching
+* Runtime security
+* Docker Compose
+* Container networking
+
+### Observability
+
+* Prometheus
+* PromQL
+* Grafana
+* Application metrics
+* Runtime metrics
+
+### Continuous Integration
+
+* GitHub Actions
+* Pytest
+* Coverage
+* Docker validation
+
+### DevSecOps
+
+* Trivy
+* Repository scanning
+* Secret scanning
+* Misconfiguration scanning
+* Container CVE scanning
+* Vulnerability triage
+
+### Source Control
+
+* Git
+* Feature branches
+* Pull requests
+* Controlled merging
+* Documentation-driven development
+
+### Troubleshooting
+
+* Port conflicts
+* Docker networking
+* Runtime dependencies
+* CI failures
+* Security-action failures
+* Scanner findings
+
+---
+
+# 🗺️ Project Roadmap
+
+## ✅ Phase 1 — Repository Foundation
+
+* [x] Repository structure
+* [x] Git initialization
+* [x] GitHub repository
+* [x] Feature-branch workflow
+
+## ✅ Phase 2 — Application
+
+* [x] Flask application
+* [x] Health endpoint
+* [x] Readiness endpoint
+* [x] Metrics endpoint
+* [x] Structured 404 response
+
+## ✅ Phase 3 — Containerization
+
+* [x] Dockerfile
+* [x] Waitress server
+* [x] Non-root runtime
+* [x] Docker health checks
+* [x] Image optimization
+
+## ✅ Phase 4 — Monitoring & Observability
+
+* [x] Docker Compose stack
+* [x] Prometheus
+* [x] Grafana
+* [x] Application availability
+* [x] HTTP request totals
+* [x] Requests by endpoint
+* [x] HTTP request rate
+* [x] Memory usage
+* [x] CPU usage
+* [x] Open file descriptors
+* [x] Final dashboard layout
+* [x] Grafana dashboard JSON export
+
+## ✅ Phase 5 — Testing & CI
+
+* [x] Pytest
+* [x] API endpoint tests
+* [x] Coverage
+* [x] Docker build validation
+* [x] GitHub Actions CI
+* [x] Push validation
+* [x] Pull-request validation
+
+## ✅ Phase 6 — DevSecOps Security
+
+* [x] Trivy repository scan
+* [x] Vulnerability scanning
+* [x] Secret scanning
+* [x] Misconfiguration scanning
+* [x] Container image scanning
+* [x] HIGH/CRITICAL analysis
+* [x] Runtime dependency verification
+* [x] Security GitHub Actions workflow
+* [x] Security troubleshooting
+* [x] Pull-request validation
+
+## 🚧 Phase 7 — Kubernetes
+
+* [ ] Namespace
+* [ ] Deployment
+* [ ] Service
+* [ ] ConfigMap
+* [ ] Liveness probe
+* [ ] Readiness probe
+* [ ] Resource requests
+* [ ] Resource limits
+* [ ] Horizontal scaling
+* [ ] Monitoring integration
+
+## ⏳ Phase 8 — Helm
+
+* [ ] Helm chart
+* [ ] Templates
+* [ ] Values files
+* [ ] Environment-specific configuration
+* [ ] Reusable deployments
+
+## ⏳ Phase 9 — Final Engineering Release
+
+* [ ] Final architecture diagram
+* [ ] Kubernetes architecture
+* [ ] Security architecture
+* [ ] End-to-end workflow documentation
+* [ ] Final screenshots
+* [ ] Release notes
+* [ ] Portfolio presentation
+
+---
+
+# 📖 Detailed Documentation
+
+| Phase   | Documentation                                               |
+| ------- | ----------------------------------------------------------- |
+| Phase 4 | [Monitoring & Observability](docs/04-monitoring-stack.md)   |
+| Phase 6 | [DevSecOps Security Scanning](docs/06-security-scanning.md) |
+
+The README describes the platform at a high level.
+
+The phase documents contain deeper:
+
+* implementation details;
+* commands;
+* troubleshooting;
+* decisions;
+* screenshots;
+* lessons learned.
+
+---
+
+# 🌿 Git Development Model
+
+Development is performed using dedicated feature branches.
+
+Examples:
+
+```text
+main
+ |
+ +---- feature/monitoring-stack
+ |
+ +---- feature/testing-ci
+ |
+ +---- feature/security-scanning
+ |
+ +---- feature/architecture-readme
+```
+
+Standard flow:
+
+```text
+Create Branch
+      ↓
+Implement
+      ↓
+Validate Locally
+      ↓
+Commit
+      ↓
+Push
+      ↓
+Pull Request
+      ↓
+GitHub Actions
+      ↓
+Review
+      ↓
+Merge
+```
+
+---
+
+# 💡 Engineering Philosophy
+
+This project follows five working principles.
+
+### 1. Build It
+
+Implement the capability.
+
+### 2. Understand It
+
+Understand how the components communicate.
+
+### 3. Break It
+
+Observe realistic failure scenarios.
+
+### 4. Troubleshoot It
+
+Identify the root cause rather than copying a workaround.
+
+### 5. Document It
+
+Record architecture, commands, decisions, screenshots, failures, and lessons.
+
+```text
+Build → Validate → Observe → Secure → Troubleshoot → Improve
+```
+
+---
+
+# 🔭 What's Next?
+
+## ☸️ Phase 7 — Kubernetes Deployment
+
+The next phase will move the containerized application toward Kubernetes while preserving the capabilities already built.
+
+```text
+Application
+     +
+Docker
+     +
+Health / Readiness
+     +
+Metrics
+     +
+Testing
+     +
+CI
+     +
+Security Scanning
+     ↓
+Kubernetes
+```
+
+The objective will not simply be to create Kubernetes YAML files.
+
+The phase will focus on understanding:
+
+* pod lifecycle;
+* service exposure;
+* configuration management;
+* health probes;
+* resource management;
+* scaling;
+* observability;
+* security validation.
+
+---
+
+# 👨‍💻 Author
 
 **Yogesh Heddure**
 
@@ -624,6 +1141,19 @@ Repository: [Enterprise DevSecOps Platform](https://github.com/YogeshS-Mca/Enter
 
 ---
 
-## License
+# 📌 Project Purpose
 
-This project is currently maintained as a personal learning and portfolio project.
+This repository is maintained as a hands-on **DevOps / DevSecOps engineering portfolio project**.
+
+The goal is to demonstrate not only successful configurations, but also:
+
+* architecture decisions;
+* implementation reasoning;
+* testing;
+* monitoring;
+* security validation;
+* troubleshooting;
+* Git workflows;
+* lessons learned.
+
+The platform will continue evolving through Kubernetes, Helm, and final release architecture.
