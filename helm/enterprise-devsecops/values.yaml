@@ -1,0 +1,48 @@
+replicaCount: 2
+
+namespace:
+  create: true
+  name: enterprise-devsecops
+
+image:
+  repository: enterprise-devsecops-platform
+  tag: "1.0.1"
+  pullPolicy: IfNotPresent
+
+container:
+  port: 5000
+
+service:
+  type: ClusterIP
+  port: 80
+
+probes:
+  liveness:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readiness:
+    path: /ready
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "256Mi"
+
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  dropCapabilities:
+    - ALL
