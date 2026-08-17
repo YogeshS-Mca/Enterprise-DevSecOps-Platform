@@ -1,0 +1,21 @@
+Enterprise DevSecOps Platform has been deployed.
+
+Release:
+  {{ .Release.Name }}
+
+Namespace:
+  {{ .Values.namespace.name }}
+
+Application Service:
+  enterprise-devsecops-service
+
+To access the application locally:
+
+  kubectl port-forward service/enterprise-devsecops-service 8080:{{ .Values.service.port }} -n {{ .Values.namespace.name }}
+
+Then test:
+
+  http://localhost:8080/
+  http://localhost:8080/health
+  http://localhost:8080/ready
+  http://localhost:8080/metrics
