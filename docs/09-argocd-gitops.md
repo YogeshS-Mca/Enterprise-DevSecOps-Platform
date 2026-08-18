@@ -4,20 +4,22 @@
 
 Implement GitOps-based continuous delivery for the Enterprise DevSecOps Platform using Argo CD.
 
-The goal of this phase is to move Kubernetes deployment management from manual commands toward a Git-driven deployment model where the Git repository becomes the source of truth for the desired application state.
+The goal of this phase is to move Kubernetes deployment management from manual deployment commands toward a Git-driven delivery model where the Git repository becomes the source of truth for the desired application state.
 
-This phase introduces:
+This phase implements:
 
-- Argo CD installation on Kubernetes
+- Argo CD on Kubernetes
 - Argo CD CLI access
-- Git repository integration
-- Helm chart deployment through Argo CD
+- GitHub repository integration
+- Helm deployment through Argo CD
 - Declarative Argo CD Application configuration
 - Automated synchronization
 - Automatic pruning
 - Self-healing
 - Server-Side Apply
 - Git-driven Kubernetes reconciliation
+- Pull Request-based deployment changes
+- Configuration-drift detection and recovery
 
 ---
 
@@ -41,13 +43,13 @@ The Kubernetes context used during this phase was:
 docker-desktop
 ```
 
-The application namespace is:
+Application namespace:
 
 ```text
 enterprise-devsecops
 ```
 
-The Argo CD control-plane namespace is:
+Argo CD control-plane namespace:
 
 ```text
 argocd
@@ -63,10 +65,16 @@ The deployment workflow introduced in this phase is:
 Developer
     |
     v
-Git Commit / Pull Request
+Feature Branch
     |
     v
-GitHub Repository
+Git Commit
+    |
+    v
+Pull Request
+    |
+    v
+GitHub main Branch
     |
     v
 Argo CD
@@ -75,7 +83,10 @@ Argo CD
 Helm Chart
     |
     v
-Kubernetes Deployment
+Kubernetes
+    |
+    v
+Deployment + Service
     |
     v
 Application Pods
@@ -92,41 +103,47 @@ Desired State in Git
 Actual State in Kubernetes
 ```
 
-When a difference is detected, Argo CD can reconcile the Kubernetes cluster with the configuration stored in Git.
+When differences are detected, Argo CD reconciles the Kubernetes environment toward the desired state stored in Git.
 
 ---
 
 ## Pre-GitOps Cluster Validation
 
-Before introducing Argo CD management, the existing Kubernetes environment was verified.
+Before introducing Argo CD, the existing Kubernetes environment was verified.
 
-The active Kubernetes context was checked using:
+The current Kubernetes context was checked using:
 
 ```powershell
 kubectl config current-context
 ```
 
-The cluster nodes were verified using:
+Cluster nodes were verified using:
 
 ```powershell
 kubectl get nodes
 ```
 
-The existing application resources were checked using:
+Existing application resources were checked using:
 
 ```powershell
 kubectl get all -n enterprise-devsecops
 ```
 
-The existing Helm release was also verified:
+The existing Helm release was verified using:
 
 ```powershell
 helm list -n enterprise-devsecops
 ```
 
-The application was healthy with two running replicas before GitOps configuration was introduced.
+The application was healthy with two running replicas before GitOps management was introduced.
 
-This provided a known-good baseline before moving deployment management to Argo CD.
+This provided a known-good baseline before moving deployment control to Argo CD.
+
+### Evidence
+
+```text
+screenshots/phase-09-01-pre-gitops-cluster-state.png
+```
 
 ---
 
@@ -138,13 +155,13 @@ Argo CD was installed into a dedicated Kubernetes namespace:
 argocd
 ```
 
-After installation, the Argo CD components were verified using:
+The Argo CD components were verified using:
 
 ```powershell
 kubectl get pods -n argocd -o wide
 ```
 
-The major Argo CD components were successfully running, including:
+The major components included:
 
 ```text
 argocd-application-controller
@@ -156,7 +173,37 @@ argocd-repo-server
 argocd-server
 ```
 
-All required Argo CD components reached the `Running` state.
+All required Argo CD components successfully reached the `Running` state.
+
+### Evidence
+
+```text
+screenshots/phase-09-02-argocd-components-running.png
+```
+
+---
+
+## Argo CD Dashboard Access
+
+The Argo CD API server was exposed locally using Kubernetes port forwarding.
+
+Example:
+
+```powershell
+kubectl port-forward svc/argocd-server `
+  -n argocd `
+  8080:443
+```
+
+The dashboard was then available locally through HTTPS.
+
+Successful access to the Argo CD login interface confirmed connectivity to the Argo CD server.
+
+### Evidence
+
+```text
+screenshots/phase-09-03-argocd-dashboard.png
+```
 
 ---
 
@@ -164,7 +211,7 @@ All required Argo CD components reached the `Running` state.
 
 The Argo CD CLI was installed on Windows using WinGet.
 
-The available package was identified using:
+The package was identified using:
 
 ```powershell
 winget search ArgoCD
@@ -182,13 +229,13 @@ The CLI was installed using:
 winget install --id argoproj.argocd -e
 ```
 
-The installation was validated using:
+Installation was validated using:
 
 ```powershell
 argocd version --client
 ```
 
-The installed client version was:
+Installed client version:
 
 ```text
 v3.5.1
@@ -196,9 +243,9 @@ v3.5.1
 
 ---
 
-## Argo CD Access Validation
+## Argo CD CLI Authentication
 
-After accessing the Argo CD server, authentication was verified using:
+Authentication was verified using:
 
 ```powershell
 argocd account get-user-info
@@ -224,19 +271,25 @@ Argo CD identified the local Kubernetes cluster as:
 https://kubernetes.default.svc
 ```
 
-This confirmed that Argo CD could communicate with the Kubernetes API server.
+This confirmed that the Argo CD CLI and control plane could communicate successfully with the Kubernetes environment.
+
+### Evidence
+
+```text
+screenshots/phase-09-04-argocd-cli-access.png
+```
 
 ---
 
 ## Declarative Argo CD Application
 
-A declarative Argo CD Application manifest was created at:
+A declarative Application manifest was created at:
 
 ```text
 argocd/application.yaml
 ```
 
-The Application definition is:
+The final configuration is:
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -271,19 +324,9 @@ spec:
       - ServerSideApply=true
 ```
 
-This manifest connects Argo CD to the Helm chart stored in the GitHub repository.
+The Application connects Argo CD to the Helm chart stored in the Git repository.
 
----
-
-## Application Source Configuration
-
-The Git repository used by Argo CD is:
-
-```text
-Enterprise-DevSecOps-Platform
-```
-
-The tracked Git revision is:
+The tracked branch is:
 
 ```text
 main
@@ -295,56 +338,31 @@ The Helm chart path is:
 helm/enterprise-devsecops
 ```
 
-The Helm release name is:
+The destination namespace is:
 
 ```text
 enterprise-devsecops
 ```
 
-Therefore, Argo CD uses the Helm chart stored on the `main` branch as the desired state of the application.
-
 ---
 
-## Destination Configuration
+## Application Manifest Validation
 
-The Application deploys to the Kubernetes API server:
-
-```text
-https://kubernetes.default.svc
-```
-
-and targets the namespace:
-
-```text
-enterprise-devsecops
-```
-
-The namespace can also be created automatically through:
-
-```yaml
-syncOptions:
-  - CreateNamespace=true
-```
-
----
-
-## Argo CD Application Validation
-
-Before creating the Application, the manifest was validated locally:
+Before applying the Application manifest, client-side validation was performed:
 
 ```powershell
 kubectl apply --dry-run=client -f argocd\application.yaml
 ```
 
-The Kubernetes API server was then used for additional validation:
+Server-side validation was then performed:
 
 ```powershell
 kubectl apply --dry-run=server -f argocd\application.yaml
 ```
 
-The validation completed successfully.
+Both validations completed successfully.
 
-The Helm chart was also validated using:
+The Helm chart was also validated:
 
 ```powershell
 helm lint helm\enterprise-devsecops
@@ -356,13 +374,20 @@ Result:
 1 chart(s) linted, 0 chart(s) failed
 ```
 
-The chart was rendered using:
+The Helm templates were rendered using:
 
 ```powershell
-helm template enterprise-devsecops helm\enterprise-devsecops
+helm template enterprise-devsecops `
+  helm\enterprise-devsecops
 ```
 
-These checks helped validate both the Argo CD Application manifest and the underlying Helm chart before synchronization.
+These validation layers reduced the risk of introducing an invalid GitOps configuration.
+
+### Evidence
+
+```text
+screenshots/phase-09-01-argocd-application-validation.png
+```
 
 ---
 
@@ -374,32 +399,39 @@ The Application was created using:
 kubectl apply -f argocd\application.yaml
 ```
 
-The created Application was verified using:
+The resource was verified using:
 
 ```powershell
 kubectl get applications -n argocd
 ```
 
-Additional application information was retrieved using:
+Detailed information was retrieved using:
 
 ```powershell
 argocd app get enterprise-devsecops
 ```
 
-The Application successfully detected:
+Argo CD successfully detected:
 
 ```text
-Repository: https://github.com/YogeshS-Mca/Enterprise-DevSecOps-Platform.git
-Target Revision: main
-Path: helm/enterprise-devsecops
-Destination Namespace: enterprise-devsecops
+Repository:
+Enterprise-DevSecOps-Platform
+
+Target Revision:
+main
+
+Path:
+helm/enterprise-devsecops
+
+Destination:
+enterprise-devsecops
 ```
 
 ---
 
-## Initial OutOfSync State
+## Initial OutOfSync Detection
 
-After the Argo CD Application was created, its status was checked using:
+After the Application was created, its state was checked using:
 
 ```powershell
 kubectl get application enterprise-devsecops `
@@ -407,26 +439,36 @@ kubectl get application enterprise-devsecops `
   -o wide
 ```
 
-The initial status showed:
+The initial result showed:
 
 ```text
-SYNC STATUS: OutOfSync
-HEALTH STATUS: Healthy
+Sync Status: OutOfSync
+Health Status: Healthy
 ```
 
-This was an important GitOps observation.
+This demonstrated an important GitOps concept.
 
-`Healthy` indicated that the existing Kubernetes workload itself was functioning correctly.
+`Healthy` indicated that the existing Kubernetes application was operational.
 
-`OutOfSync` indicated that the live Kubernetes state did not completely match the desired state rendered by Argo CD from Git.
+`OutOfSync` indicated that the actual Kubernetes configuration did not fully match the desired state rendered by Argo CD from Git.
 
-This demonstrates that application health and Git synchronization are separate concepts.
+Therefore:
+
+```text
+Application Health != Git Synchronization State
+```
+
+### Evidence
+
+```text
+screenshots/phase-09-05-argocd-application-outofsync.png
+```
 
 ---
 
 ## First GitOps Synchronization
 
-The first Argo CD synchronization aligned the existing Kubernetes resources with the desired state stored in Git.
+The existing application resources were synchronized with the desired configuration managed through Argo CD.
 
 After synchronization, the Application reached:
 
@@ -443,38 +485,19 @@ Service
 Deployment
 ```
 
-This established Argo CD as the GitOps deployment controller for the application.
+This established Argo CD as the GitOps controller for the application.
 
----
-
-## Server-Side Apply
-
-The following synchronization option was enabled:
-
-```yaml
-syncOptions:
-  - ServerSideApply=true
-```
-
-Server-Side Apply allows Kubernetes to manage field ownership through the API server.
-
-This is particularly relevant to this project because the application resources had previously been managed using:
+### Evidence
 
 ```text
-kubectl
-        ↓
-Helm
-        ↓
-Argo CD
+screenshots/phase-09-06-first-gitops-sync-success.png
 ```
-
-The project therefore demonstrates a realistic migration of Kubernetes resource management across multiple deployment mechanisms.
 
 ---
 
 ## Automated Synchronization
 
-Automated synchronization was enabled using:
+Automated synchronization was configured using:
 
 ```yaml
 syncPolicy:
@@ -483,42 +506,42 @@ syncPolicy:
     selfHeal: true
 ```
 
-This changes the deployment model from manual synchronization to continuous GitOps reconciliation.
+This changes the deployment model from manual synchronization toward continuous GitOps reconciliation.
 
-The desired workflow becomes:
+The workflow becomes:
 
 ```text
-Git change
+Git Change
     |
     v
-Argo CD detects difference
+Argo CD Detects Difference
     |
     v
-Application becomes OutOfSync
+OutOfSync
     |
     v
-Automatic synchronization
+Automatic Synchronization
     |
     v
-Kubernetes reconciled
+Kubernetes Reconciliation
     |
     v
-Application returns to Synced / Healthy
+Synced + Healthy
 ```
 
 ---
 
 ## Automatic Pruning
 
-Pruning was enabled using:
+Automatic pruning was enabled using:
 
 ```yaml
 prune: true
 ```
 
-With pruning enabled, resources removed from the Git-managed desired state can also be removed from the Kubernetes cluster during synchronization.
+With pruning enabled, resources removed from the Git-managed desired state can also be removed from Kubernetes during synchronization.
 
-This helps prevent obsolete resources from remaining in the cluster after they are removed from the declarative configuration.
+This helps prevent obsolete Git-managed resources from remaining in the cluster.
 
 ---
 
@@ -530,23 +553,74 @@ Self-healing was enabled using:
 selfHeal: true
 ```
 
-Self-healing allows Argo CD to detect changes made directly to managed Kubernetes resources and reconcile them back to the desired state stored in Git.
+This allows Argo CD to reconcile changes made directly to managed Kubernetes resources back toward the desired state stored in Git.
 
-The intended control model is:
+The control model becomes:
 
 ```text
-Git = Desired State
-Kubernetes = Actual State
-Argo CD = Reconciliation Controller
+Git
+Desired State
+     |
+     v
+Argo CD
+Reconciliation Controller
+     |
+     v
+Kubernetes
+Actual State
 ```
 
-If the actual cluster state drifts from Git, Argo CD can restore the Git-defined configuration.
+---
+
+## Server-Side Apply
+
+The Application enables:
+
+```yaml
+syncOptions:
+  - ServerSideApply=true
+```
+
+Server-Side Apply delegates field ownership management to the Kubernetes API server.
+
+This is particularly relevant to this project because application resource management evolved through:
+
+```text
+kubectl
+   |
+   v
+Helm
+   |
+   v
+Argo CD
+```
+
+The option supports the transition toward declarative Argo CD management.
+
+---
+
+## Namespace Management
+
+The following synchronization option was configured:
+
+```yaml
+syncOptions:
+  - CreateNamespace=true
+```
+
+This allows Argo CD to ensure that the destination namespace exists when synchronization occurs.
+
+The configured destination is:
+
+```text
+enterprise-devsecops
+```
 
 ---
 
 ## Automated Sync Policy Verification
 
-The configured synchronization policy was verified using:
+The synchronization policy was verified using:
 
 ```powershell
 kubectl get application enterprise-devsecops `
@@ -554,7 +628,7 @@ kubectl get application enterprise-devsecops `
   -o jsonpath="{.spec.syncPolicy}"
 ```
 
-The result confirmed:
+The configuration confirmed:
 
 ```json
 {
@@ -569,7 +643,7 @@ The result confirmed:
 }
 ```
 
-The Argo CD Application also reported:
+The Application reported:
 
 ```text
 Sync Policy: Automated (Prune)
@@ -577,13 +651,18 @@ Sync Status: Synced
 Health Status: Healthy
 ```
 
-This confirmed that automated GitOps reconciliation was enabled successfully.
+### Evidence
+
+```text
+screenshots/phase-09-07-argocd-automated-sync-enabled.png
+screenshots/phase-09-07-argocd-synced-healthy-dashboard.png
+```
 
 ---
 
-## Git-Driven Replica Change
+## Git-Driven Deployment Test
 
-To demonstrate Git-driven deployment, the Helm desired state was changed from:
+To prove that Git was controlling the desired Kubernetes state, the Helm configuration was changed from:
 
 ```yaml
 replicaCount: 2
@@ -601,23 +680,15 @@ The change was made in:
 helm/enterprise-devsecops/values.yaml
 ```
 
-Before the Git change was merged into the tracked `main` branch, the running Kubernetes Deployment remained:
-
-```text
-READY: 2/2
-```
-
-This behavior is expected.
-
-The Argo CD Application tracks:
+The Application tracks:
 
 ```yaml
 targetRevision: main
 ```
 
-Therefore, a change existing only on the feature branch does not become the desired production state until it is merged into `main`.
+Therefore, the feature-branch change did not immediately affect the Kubernetes workload.
 
-The intended GitOps validation flow is:
+The desired workflow was:
 
 ```text
 Feature Branch
@@ -626,74 +697,295 @@ Feature Branch
 replicaCount: 3
       |
       v
+Commit
+      |
+      v
 Pull Request
+      |
+      v
+Repository Checks
       |
       v
 Merge into main
       |
       v
-Argo CD detects new Git revision
+Argo CD detects new revision
       |
       v
 Automatic synchronization
       |
       v
-Deployment scales from 2 to 3 replicas
+Kubernetes reconciled
 ```
-
-This demonstrates an important GitOps principle:
-
-> Changes should flow through Git rather than being applied directly to the cluster.
 
 ---
 
-## GitOps Validation Strategy
+## Pull Request Validation
 
-The Phase 9 implementation is validated through several layers:
+The GitOps implementation was submitted through a GitHub Pull Request.
+
+Repository checks completed successfully before merge.
+
+The Pull Request showed:
 
 ```text
-1. Kubernetes cluster validation
+All checks have passed
+No conflicts with base branch
+```
+
+This ensured that the GitOps configuration followed the same controlled development workflow as the other project phases.
+
+### Evidence
+
+```text
+screenshots/phase-09-08-github-pr-checks-passed.png
+```
+
+---
+
+## Git-Driven Automatic Reconciliation
+
+After the Pull Request was merged into `main`, Argo CD detected the new Git revision.
+
+The desired Helm state was now:
+
+```yaml
+replicaCount: 3
+```
+
+Argo CD automatically reconciled the Kubernetes Deployment.
+
+No manual deployment command was required after the Git change was merged.
+
+The following were not required to deploy the replica change:
+
+```text
+kubectl apply
+helm upgrade
+argocd app sync
+```
+
+The Kubernetes Deployment reached:
+
+```text
+READY:       3/3
+UP-TO-DATE:  3
+AVAILABLE:   3
+```
+
+Three application Pods were running.
+
+Argo CD reported:
+
+```text
+Sync Policy: Automated (Prune)
+Sync Status: Synced
+Health Status: Healthy
+```
+
+This validated the Git-driven continuous delivery workflow:
+
+```text
+Git Desired State
+replicaCount: 3
         |
         v
-2. Argo CD component validation
+Merge into main
         |
         v
-3. Argo CD CLI authentication
+Argo CD Detects Revision
         |
         v
-4. Application manifest validation
+Automatic Sync
         |
         v
-5. Helm lint and rendering
+Helm Rendering
         |
         v
-6. Argo CD Application creation
+Kubernetes Reconciliation
         |
         v
-7. Initial OutOfSync detection
+3 Running Replicas
         |
         v
-8. Successful synchronization
+Synced + Healthy
+```
+
+### Evidence
+
+```text
+screenshots/phase-09-09-git-driven-auto-sync.png
+```
+
+---
+
+## Self-Healing Validation
+
+After validating Git-driven synchronization, a controlled configuration drift was intentionally introduced.
+
+The Git-defined desired state was:
+
+```yaml
+replicaCount: 3
+```
+
+The live Kubernetes Deployment was manually changed using:
+
+```powershell
+kubectl scale deployment/enterprise-devsecops-app `
+  --replicas=5 `
+  -n enterprise-devsecops
+```
+
+The intended drift was:
+
+```text
+Git Desired State:       3 replicas
+Manual Kubernetes Scale: 5 replicas
+```
+
+Because Argo CD self-healing was enabled, the live configuration was automatically reconciled back toward the desired state stored in Git.
+
+After reconciliation:
+
+```powershell
+kubectl get deployment enterprise-devsecops-app `
+  -n enterprise-devsecops
+```
+
+showed:
+
+```text
+READY:       3/3
+UP-TO-DATE:  3
+AVAILABLE:   3
+```
+
+The application Pods were checked using:
+
+```powershell
+kubectl get pods -n enterprise-devsecops
+```
+
+Three running Pods remained.
+
+The Argo CD Application reported:
+
+```text
+Sync Policy: Automated (Prune)
+Sync Status: Synced
+Health Status: Healthy
+```
+
+The reconciliation happened quickly enough that the requested five-replica state had already been corrected when the Deployment was subsequently inspected.
+
+This validates configuration-drift correction:
+
+```text
+Git Desired State
+3 Replicas
+     |
+     v
+Manual Cluster Change
+5 Replicas Requested
+     |
+     v
+Configuration Drift
+     |
+     v
+Argo CD Self-Healing
+     |
+     v
+Kubernetes Reconciled
+     |
+     v
+3 Replicas
+     |
+     v
+Synced + Healthy
+```
+
+### Evidence
+
+```text
+screenshots/phase-09-10-argocd-self-healing-success.png
+```
+
+---
+
+## Complete GitOps Workflow
+
+The completed GitOps delivery workflow is:
+
+```text
+Developer
+    |
+    v
+Feature Branch
+    |
+    v
+Configuration Change
+    |
+    v
+Git Commit
+    |
+    v
+GitHub Pull Request
+    |
+    v
+Repository / CI Checks
+    |
+    v
+Merge into main
+    |
+    v
+Argo CD
+    |
+    v
+Helm Chart Rendering
+    |
+    v
+Kubernetes Reconciliation
+    |
+    v
+Application Deployment
+    |
+    v
+Synced + Healthy
+```
+
+The drift-recovery workflow is:
+
+```text
+Git Desired State
         |
         v
-9. Automated sync configuration
+Argo CD
         |
         v
-10. Git-driven desired-state change
+Kubernetes
+        |
+   Manual Drift
         |
         v
-11. Automatic Kubernetes reconciliation
+Argo CD Detects Difference
+        |
+        v
+Self-Healing
+        |
+        v
+Desired State Restored
 ```
 
 ---
 
 ## Screenshots
 
-Evidence captured during this phase includes:
+Phase 9 evidence:
 
 ```text
-phase-09-01-pre-gitops-cluster-state.png
 phase-09-01-argocd-application-validation.png
+phase-09-01-pre-gitops-cluster-state.png
 phase-09-02-argocd-components-running.png
 phase-09-03-argocd-dashboard.png
 phase-09-04-argocd-cli-access.png
@@ -701,81 +993,262 @@ phase-09-05-argocd-application-outofsync.png
 phase-09-06-first-gitops-sync-success.png
 phase-09-07-argocd-automated-sync-enabled.png
 phase-09-07-argocd-synced-healthy-dashboard.png
+phase-09-08-github-pr-checks-passed.png
+phase-09-09-git-driven-auto-sync.png
+phase-09-10-argocd-self-healing-success.png
 ```
 
-Additional evidence will be captured after the Git-driven replica change is merged and automatically reconciled by Argo CD.
+These screenshots provide evidence for:
+
+- Pre-GitOps Kubernetes state
+- Argo CD Application validation
+- Argo CD components
+- Dashboard access
+- CLI authentication
+- Initial OutOfSync detection
+- First synchronization
+- Automated synchronization
+- Synced and Healthy dashboard state
+- GitHub Pull Request checks
+- Git-driven automatic deployment
+- Self-healing and drift correction
 
 ---
 
-## Key Learning
+## Key Technical Learnings
 
-This phase demonstrates the transition from imperative deployment management to declarative GitOps-based continuous delivery.
+### Git Is the Desired-State Source
 
-The previous deployment model was:
+The deployment model now follows:
 
 ```text
-Developer
-    |
-    v
-kubectl / Helm command
-    |
-    v
-Kubernetes
+Git = Desired State
+Kubernetes = Actual State
+Argo CD = Reconciliation Controller
 ```
 
-The GitOps deployment model is:
+Changes intended for the application should flow through Git rather than being applied directly to the cluster.
+
+### Health and Synchronization Are Separate
+
+The project observed:
 
 ```text
-Developer
-    |
-    v
-Git Commit
-    |
-    v
+Healthy + OutOfSync
+```
+
+The application could remain operational while its Kubernetes configuration differed from Git.
+
+After reconciliation:
+
+```text
+Healthy + Synced
+```
+
+confirmed both workload health and desired-state alignment.
+
+### Feature Branches Do Not Automatically Become Desired State
+
+Because the Application tracks:
+
+```yaml
+targetRevision: main
+```
+
+a change on:
+
+```text
+feature/argocd-gitops
+```
+
+did not affect the workload until it was merged into `main`.
+
+This establishes the controlled deployment path:
+
+```text
+Feature Branch
+      |
+      v
 Pull Request
-    |
-    v
-main Branch
-    |
-    v
+      |
+      v
+Checks
+      |
+      v
+Merge
+      |
+      v
+main
+      |
+      v
 Argo CD
-    |
-    v
+```
+
+### Automated Sync Enables Git-Driven Deployment
+
+After the replica change was merged, no manual deployment command was required.
+
+Argo CD automatically detected the Git change and reconciled Kubernetes from two to three replicas.
+
+### Self-Healing Corrects Configuration Drift
+
+A manual attempt to scale the live Deployment to five replicas was automatically reconciled back to the Git-defined three replicas.
+
+This demonstrates continuous desired-state enforcement.
+
+### Helm and Argo CD Have Different Responsibilities
+
+Helm provides:
+
+```text
+Packaging
+Templating
+Configurable Kubernetes manifests
+```
+
+Argo CD provides:
+
+```text
+Git monitoring
+Desired-state comparison
+Automatic synchronization
+Pruning
+Drift detection
+Self-healing
+Continuous delivery
+```
+
+Together:
+
+```text
+Git
+ |
+ v
+Argo CD
+ |
+ v
 Helm
-    |
-    v
+ |
+ v
 Kubernetes
 ```
 
-The most important principle is:
+### Server-Side Apply Supports Declarative Resource Management
+
+The project uses:
+
+```yaml
+ServerSideApply=true
+```
+
+The application's management lifecycle evolved through:
 
 ```text
-Git defines the desired state.
-Argo CD continuously compares desired and actual state.
-Kubernetes executes the reconciled workload.
+kubectl
+   |
+   v
+Helm
+   |
+   v
+Argo CD
 ```
+
+This demonstrates the migration of an existing Kubernetes workload toward declarative GitOps management.
 
 ---
 
-## Phase 9 Current Status
+## Phase 9 Final Outcome
 
-The following capabilities have been implemented successfully:
+Phase 9 successfully implemented GitOps continuous delivery for the Enterprise DevSecOps Platform.
 
-- Argo CD installed in Kubernetes
-- Argo CD components running
+Completed capabilities:
+
+- Argo CD installed on Kubernetes
+- Argo CD components validated
+- Argo CD dashboard accessed
 - Argo CD CLI installed
 - CLI authentication verified
-- Kubernetes cluster connectivity verified
+- Kubernetes connectivity verified
 - Declarative Argo CD Application created
-- GitHub repository configured as application source
-- Helm chart configured as deployment source
+- GitHub configured as the desired-state source
+- Helm chart integrated with Argo CD
+- Application manifest validated
 - Initial OutOfSync state observed
 - First GitOps synchronization completed
-- Application reached Synced and Healthy state
+- Application reached Synced and Healthy
 - Automated synchronization enabled
 - Automatic pruning enabled
 - Self-healing enabled
 - Server-Side Apply enabled
-- Git-driven replica change prepared
+- Namespace creation option enabled
+- Git-driven replica change implemented
+- Pull Request checks completed successfully
+- Configuration merged into `main`
+- Argo CD detected the new Git revision
+- Deployment automatically scaled from two to three replicas
+- Manual Kubernetes drift introduced
+- Argo CD automatically corrected the drift
+- Deployment returned to the Git-defined three replicas
+- Final Application state verified as Synced and Healthy
 
-The final validation is to merge the desired replica change into `main` and verify that Argo CD automatically reconciles the Kubernetes Deployment from two replicas to three without manually running `kubectl apply`, `helm upgrade`, or `argocd app sync`.
+---
+
+## Phase 9 Status
+
+```text
+ARGO CD GITOPS CONTINUOUS DELIVERY: COMPLETE
+```
+
+The Enterprise DevSecOps Platform now supports a Git-driven continuous delivery workflow where application configuration is promoted through Git and automatically reconciled into Kubernetes through Argo CD.
+
+Final deployment path:
+
+```text
+Code / Configuration
+        |
+        v
+Feature Branch
+        |
+        v
+Pull Request
+        |
+        v
+Repository Checks
+        |
+        v
+Merge into main
+        |
+        v
+Argo CD
+        |
+        v
+Helm
+        |
+        v
+Kubernetes
+        |
+        v
+Application
+```
+
+Final reconciliation model:
+
+```text
+                 Git
+           Desired State
+                 |
+                 v
+              Argo CD
+             /       \
+            v         v
+       Auto Sync   Self-Healing
+            \         /
+             \       /
+                 v
+             Kubernetes
+                 |
+                 v
+          Synced + Healthy
+```
+
+Phase 9 is complete.
