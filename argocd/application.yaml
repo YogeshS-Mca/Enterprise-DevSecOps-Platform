@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: enterprise-devsecops
+  namespace: argocd
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/YogeshS-Mca/Enterprise-DevSecOps-Platform.git
+    targetRevision: main
+    path: helm/enterprise-devsecops
+
+    helm:
+      releaseName: enterprise-devsecops
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: enterprise-devsecops
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
